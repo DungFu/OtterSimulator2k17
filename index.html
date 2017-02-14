@@ -7,6 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.3.5/pixi.min.js"></script>
   <script src="smooth.js"></script>
   <style>* {padding: 0; margin: 0}</style>
+  <link rel="stylesheet" href="master.css">
 <body>
   <script type="text/javascript">
     var type = "WebGL"
@@ -18,10 +19,9 @@
 
     //Create the renderer
 
-    var renderer = PIXI.autoDetectRenderer(256, 256);
+    var renderer = PIXI.autoDetectRenderer(256, 256, {transparent: true});
     renderer.view.style.position = "absolute";
     renderer.view.style.display = "block";
-    renderer.backgroundColor = 0xffffff;
     renderer.autoResize = true;
     renderer.resize(window.innerWidth, window.innerHeight);
 
@@ -40,7 +40,8 @@
 
     PIXI.loader
     .add([
-      "img/otter_sprite.png"
+      "img/otter_sprite.png",
+      "img/bang.png"
     ])
     .load(setup);
 
@@ -89,6 +90,9 @@
     var otterModeRerender = false;
     var lastOtterMode;
     var prevRenderTime = Date.now();
+    var otterBusy = false;
+    var bangText = null;
+    var bangTextLastTime = 0;
 
     function gameLoop() {
       requestAnimationFrame(gameLoop);
@@ -120,6 +124,11 @@
         }
       }
       runMode();
+      if (Date.now() - bangTextLastTime <= 500) {
+        bangText.alpha = 1 - (Date.now() - bangTextLastTime) / 500;
+      } else {
+        bangText.alpha = 0;
+      }
       renderer.render(stage);
       prevRenderTime = Date.now();
     }
@@ -130,8 +139,36 @@
       otterTexture.frame = rectangle;
       otter = new PIXI.Sprite(otterTexture);
       stage.addChild(otter);
+
+      var bangTextTexture = PIXI.loader.resources["img/bang.png"].texture;
+      bangText = new PIXI.Sprite(bangTextTexture);
+      bangText.alpha = 0;
+      stage.addChild(bangText);
+
       renderer.render(stage);
       gameLoop();
+
+      setTimeout(function() {
+        goIdle();
+      }, otterPathTime * Math.random() + otterPathTime)
+    }
+
+    function goIdle() {
+      if (otterBusy) {
+        return;
+      }
+      var prevMode = otterMode;
+      otterBusy = true;
+      otterMode = "idle";
+      otterModeRerender = true;
+      setTimeout(function() {
+        otterBusy = false;
+        otterMode = prevMode;
+        otterModeRerender = true;
+        setTimeout(function() {
+          goIdle();
+        }, otterPathTime * Math.random() + otterPathTime)
+      }, 3000 * Math.random() + 3000);
     }
 
     function runMode() {
@@ -142,9 +179,13 @@
           otterPositions[otterMode][index][1]*otterSpriteSize,
           otterSpriteSize,
           otterSpriteSize);
+        var timer = 800;
+        if (otterMode.includes("swim_")) {
+          timer = 200;
+        }
         otterTexture.frame = rectangle;
         lastOtterUpdate = Date.now();
-        nextOtterUpdate = Math.random() * 200 + 200;
+        nextOtterUpdate = Math.random() * timer + timer;
         otterModeRerender = false;
       }
     }
@@ -152,9 +193,17 @@
     document.onmousemove = function(e) {
       mouseX = e.pageX;
       mouseY = e.pageY;
+      bangText.position.set(mouseX - 100, mouseY - 100);
     }
 
     document.onmousedown = function(e) {
+      if (otterBusy) {
+        return;
+      }
+      bangText.alpha = 1;
+      bangTextLastTime = Date.now();
+      var prevMode = otterMode;
+      otterBusy = true;
       otterMode = "hide";
       otterModeRerender = true;
       setTimeout(function() {
@@ -164,7 +213,8 @@
           otterMode = "hide";
           otterModeRerender = true;
           setTimeout(function() {
-            otterMode = "swim_";
+            otterBusy = false;
+            otterMode = prevMode;
             otterModeRerender = true;
           }, 2000);
         }, 500);
