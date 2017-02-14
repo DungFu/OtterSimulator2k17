@@ -1,7 +1,38 @@
 html {
+  padding: 0;
+  margin: 0;
   background: url(img/water.jpg) no-repeat center center fixed; 
   -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
   background-size: cover;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+#otter_enrichment {
+  font-family: Arial;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: purple;
+  padding: 20px;
+  color: white;
+  border-bottom-right-radius: 20px;
+}
+
+#otter_enrichment_score {
+  visibility: hidden;
+  font-family: Arial;
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: purple;
+  padding: 20px;
+  color: white;
+  border-bottom-left-radius: 20px;
 }
