@@ -14,6 +14,20 @@ body {
 }
 
 #otter_enrichment {
+  visibility: hidden;
+  font-family: Arial;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: purple;
+  padding: 20px;
+  color: white;
+  border-bottom-right-radius: 20px;
+}
+
+#goodbye {
+  visibility: hidden;
   font-family: Arial;
   cursor: pointer;
   position: absolute;
@@ -35,4 +49,19 @@ body {
   padding: 20px;
   color: white;
   border-bottom-left-radius: 20px;
+}
+
+#message {
+  visibility: hidden;
+  font-family: Arial;
+  position: absolute;
+  max-width: 50%;
+  top: 0;
+  left: 50%;
+  background-color: purple;
+  padding: 20px;
+  color: white;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  transform: translate(-50%, 0);
 }

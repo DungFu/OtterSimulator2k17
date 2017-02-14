@@ -97,7 +97,12 @@
     var bangText = null;
     var bangTextLastTime = 0;
     var game = "bang";
+    var bangMaxScore = 3;
+    var enrichmentMaxScore = 10;
     var enrichmentScore = 0;
+    var bangScore = 0;
+    var lastEnrichmentTime = 0;
+    var goodbyeDirection = 1;
 
     function gameLoop() {
       requestAnimationFrame(gameLoop);
@@ -129,25 +134,63 @@
         } else {
           otter.vx = 0;
           otter.vy = 0;
-          if (otterMode != "grab") {
+          if (otterMode != "grab" && lastEnrichmentTime + 2000 < Date.now()) {
+            otterMode = "grab";
             enrichmentScore++;
             var enrichmentScoreDiv = document.getElementById('otter_enrichment_score');
             enrichmentScoreDiv.innerHTML = "Enriched: " + enrichmentScore;
+            lastEnrichmentTime = Date.now();
           }
-          otterMode = "grab";
-          if (enrichmentScore > 10) {
-            game = "bang";
+          if (enrichmentScore >= enrichmentMaxScore) {
+            game = "gotostart";
             otterMode = "swim_";
-            var enrichmentButton = document.getElementById('otter_enrichment');
-            enrichmentButton.style.visibility = 'visible';
             var enrichmentScoreDiv = document.getElementById('otter_enrichment_score');
             enrichmentScoreDiv.style.visibility = 'hidden';
             otterModeRerender = true;
+            setMessage("Nibbles is so enriched! He is pretty tired now though, he needs to rest before he can make it all the way home by himself.");
+            setTimeout(function() {
+              setMessage("Nibbles' mom misses him very much. He needs to get home and we can't go with him on his big journey. Say goodbye!");
+              var goodbyeDiv = document.getElementById('goodbye');
+              goodbyeDiv.style.visibility = 'visible';
+            }, 15000);
           }
         }
         otter.x += otter.vx;
         otter.y += otter.vy;
-        
+      } else if (game == "goodbye") {
+        var currentX = otter.position.x + otterSpriteSize / 2;
+        var currentY = otter.position.y + otterSpriteSize / 2;
+        var endX = goodbyeDirection > 0 ? window.innerWidth * 1.5 : -window.innerWidth/2;
+        var endY = window.innerHeight / 2;
+        var divisor = Math.sqrt(Math.pow(endX - currentX, 2) + Math.pow(endY - currentY, 2));
+        otter.vx = (endX - currentX) / divisor * 2;
+        otter.vy = (endY - currentY) / divisor * 2;
+        if (!otterMode.includes("swim_")) {
+          otterModeRerender = true;
+        }
+        otterMode = getOtterDirection([currentX, currentY], [endX, endY]);
+        otter.x += otter.vx;
+        otter.y += otter.vy;
+      } else if (game == "gotostart") {
+        var currentX = otter.position.x + otterSpriteSize / 2;
+        var currentY = otter.position.y + otterSpriteSize / 2;
+        var endX = window.innerWidth * 0.2;
+        var endY = window.innerHeight * 0.2;
+        var divisor = Math.sqrt(Math.pow(endX - currentX, 2) + Math.pow(endY - currentY, 2));
+        if (divisor < 1) {
+          game = "bang";
+          otterMode = "swim_";
+          pathProgress = 0;
+        } else {
+          otter.vx = (endX - currentX) / divisor * 2;
+          otter.vy = (endY - currentY) / divisor * 2;
+          if (!otterMode.includes("swim_")) {
+            otterModeRerender = true;
+          }
+          otterMode = getOtterDirection([currentX, currentY], [endX, endY]);
+          otter.x += otter.vx;
+          otter.y += otter.vy;
+        }
       }
       runMode();
       if (Date.now() - bangTextLastTime <= 500) {
@@ -192,6 +235,12 @@
       renderer.render(stage);
       gameLoop();
 
+      setMessage("Nibbles is lost and can't find his way home. You need to help him! He needs to learn new tricks and skills to get home to his mom.");
+
+      setTimeout(function() {
+        setMessage("The first skill Nibbles needs to learn is to hide from predators to stay safe. (click the screen)");
+      }, 8000);
+
       setTimeout(function() {
         goIdle();
       }, otterPathTime * Math.random() + otterPathTime)
@@ -235,6 +284,7 @@
     }
 
     function launchEnrichment() {
+      setMessage("He's pretty speedy! Don't let Nibbles catch you too easily, he needs his practice if he's going to make it home.")
       var enrichmentButton = document.getElementById('otter_enrichment');
       enrichmentButton.style.visibility = 'hidden';
       var enrichmentScoreDiv = document.getElementById('otter_enrichment_score');
@@ -244,42 +294,94 @@
       enrichmentScore = 0;
     }
 
+    function goodbye() {
+      var goodbyeDiv = document.getElementById('goodbye');
+      goodbyeDiv.style.visibility = 'hidden';
+      setMessage("Bye bye, have a safe trip Nibbles!");
+      if (otter.position.x > window.innerWidth / 2) {
+        goodbyeDirection = -1;
+      } else {
+        goodbyeDirection = 1;
+      }
+      otterBusy = true;
+      otterMode = "hide";
+      otterModeRerender = true;
+      setTimeout(function() {
+        setMessage("No no, don't be sad Nibbles! We'll see each other again soon!");
+        setTimeout(function() {
+          setMessage("Bye Nibbles! Be safe!");
+          otterMode = "swim_";
+          otterModeRerender = true;
+          game = "goodbye";
+          setTimeout(function() {
+            setMessage("Make sure to remember!");
+            launchBang("See you soon Nibbles! Make sure to eat lots of fish!", false);
+          }, 2000);
+        }, 5000);
+      }, 8000);
+    }
+
+    function setMessage(message) {
+      var messageDiv = document.getElementById('message');
+      messageDiv.style.visibility = (message == "" || message == null) ? 'hidden' : 'visible';
+      messageDiv.innerHTML = message;
+    }
+
+    function launchBang(message, enrichmentAfter) {
+      bangScore++;
+      bangText.alpha = 1;
+      bangTextLastTime = Date.now();
+      var prevMode = otterMode;
+      var prevGame = game;
+      otterBusy = true;
+      otterMode = "hide";
+      otterModeRerender = true;
+      game = "bang";
+      setTimeout(function() {
+        otterMode = "scared";
+        otterModeRerender = true;
+        setTimeout(function() {
+          otterMode = "hide";
+          otterModeRerender = true;
+          setTimeout(function() {
+            if (enrichmentAfter) {
+              if (bangScore == bangMaxScore) {
+                setMessage(message);
+                var enrichmentButton = document.getElementById('otter_enrichment');
+                enrichmentButton.style.visibility = 'visible';
+              }
+            } else {
+              setMessage(message);
+            }
+            otterBusy = false;
+            otterMode = prevMode;
+            game = prevGame;
+            otterModeRerender = true;
+          }, 2000);
+        }, 500);
+      }, 2000);
+    }
+
     document.onmousemove = function(e) {
       mouseX = e.pageX;
       mouseY = e.pageY;
       if (bangText !== null) {
         bangText.position.set(mouseX - 100, mouseY - 100);
       }
-    } 
+    }
 
     renderer.view.onmousedown = function(e) {
       if (otterBusy) {
         return;
       }
       if (game == "bang") {
-        bangText.alpha = 1;
-        bangTextLastTime = Date.now();
-        var prevMode = otterMode;
-        otterBusy = true;
-        otterMode = "hide";
-        otterModeRerender = true;
-        setTimeout(function() {
-          otterMode = "scared";
-          otterModeRerender = true;
-          setTimeout(function() {
-            otterMode = "hide";
-            otterModeRerender = true;
-            setTimeout(function() {
-              otterBusy = false;
-              otterMode = prevMode;
-              otterModeRerender = true;
-            }, 2000);
-          }, 500);
-        }, 2000);
+        launchBang("Nibbles is now a pro at hiding from predators! He won't have any troubles staying safe getting home now. Next he needs to be enriched!", true);
       }
     }
   </script>
   <div id="otter_enrichment" onclick="launchEnrichment()">Otter Enrichment!</div>
+  <div id="goodbye" onclick="goodbye()">Goodbye!</div>
+  <div id="message"></div>
   <div id="otter_enrichment_score"></div>
 </body>
 </html>
