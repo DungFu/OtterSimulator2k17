@@ -5,7 +5,7 @@
   <title>Hello World</title>
 </head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.3.5/pixi.min.js"></script>
-  <script src="scaleToWindow.js"></script>
+  <script src="smooth.js"></script>
   <style>* {padding: 0; margin: 0}</style>
 <body>
   <script type="text/javascript">
@@ -55,23 +55,73 @@
       "hide": [[2,0]],
       "standing": [[3,0]],
       "struggle": [[0,2]],
-      "swim_left": [[0,1]],
-      "swim_down": [[1,1], [3,2], [4,2]],
-      "swim_right": [[4,1]],
-      "swim_up": [[2,2]],
+      "swim_left": [[0,1], [5,1], [6,1], [9,2]],
+      "swim_down": [[1,1], [3,2], [4,2], [8,0], [9,0], [8,1], [5,2], [7,2]],
+      "swim_right": [[4,1], [5,0], [7,1], [8,2]],
+      "swim_up": [[2,2], [6,0], [7,0], [9,1], [6,2]],
     }
+
+    var otterPathPoints = [
+      [0.2, 0.2],
+      [0.1, 0.4],
+      [0.3, 0.6],
+      [0.4, 0.8],
+      [0.5, 0.5],
+      [0.8, 0.8],
+      [0.7, 0.6],
+      [0.8, 0.3],
+      [0.5, 0.2],
+      [0.2, 0.2]
+    ];
+
+    var otterPath = Smooth(otterPathPoints, {
+        method: Smooth.METHOD_LANCZOS
+    });
+
+    var otterPathTime = 15000;
+    var pathProgress = 0;
 
     var otterTexture = null;
     var otter = null;
     var lastOtterUpdate = 0;
     var nextOtterUpdate = 0;
-    var otterMode = "idle";
+    var otterMode = "swim_";
+    var otterModeRerender = false;
+    var lastOtterMode;
+    var prevRenderTime = Date.now();
 
     function gameLoop() {
       requestAnimationFrame(gameLoop);
+      var tDelta = Date.now() - prevRenderTime;
+      if (otterMode.includes("swim_")) {
+        pathProgress += tDelta/otterPathTime;
+        pathProgress = pathProgress % 1;
+        var index = pathProgress * (otterPathPoints.length - 1);
+        var otterPosition = otterPath(index);
+        otter.position.set(
+          otterPosition[0] * window.innerWidth - otterSpriteSize/2,
+          otterPosition[1] * window.innerHeight - otterSpriteSize/2
+        );
+        var before = otterPath(index - 0.1);
+        deltax = otterPosition[0] - before[0];
+        deltay = otterPosition[1] - before[1];
+        if (Math.abs(deltax) > Math.abs(deltay)) {
+          if (deltax < 0) {
+            otterMode = "swim_left";
+          } else {
+            otterMode = "swim_right";
+          }
+        } else {
+          if (deltay < 0) {
+            otterMode = "swim_up";
+          } else {
+            otterMode = "swim_down";
+          }
+        }
+      }
       runMode();
-      otter.position.set(mouseX - otterSpriteSize/2, mouseY - otterSpriteSize/2);
       renderer.render(stage);
+      prevRenderTime = Date.now();
     }
 
     function setup() {
@@ -85,8 +135,8 @@
     }
 
     function runMode() {
-      if (lastOtterUpdate + nextOtterUpdate < Date.now()) {
-        var index = Math.floor((Math.random() * otterPositions.idle.length));
+      if (otterModeRerender || lastOtterUpdate + nextOtterUpdate < Date.now()) {
+        var index = Math.floor((Math.random() * otterPositions[otterMode].length));
         var rectangle = new PIXI.Rectangle(
           otterPositions[otterMode][index][0]*otterSpriteSize,
           otterPositions[otterMode][index][1]*otterSpriteSize,
@@ -94,7 +144,8 @@
           otterSpriteSize);
         otterTexture.frame = rectangle;
         lastOtterUpdate = Date.now();
-        nextOtterUpdate = Math.random() * 4000 + 2000;
+        nextOtterUpdate = Math.random() * 200 + 200;
+        otterModeRerender = false;
       }
     }
 
@@ -104,9 +155,19 @@
     }
 
     document.onmousedown = function(e) {
-      otterMode = "scared";
+      otterMode = "hide";
+      otterModeRerender = true;
       setTimeout(function() {
-        otterMode = "idle";
+        otterMode = "scared";
+        otterModeRerender = true;
+        setTimeout(function() {
+          otterMode = "hide";
+          otterModeRerender = true;
+          setTimeout(function() {
+            otterMode = "swim_";
+            otterModeRerender = true;
+          }, 2000);
+        }, 500);
       }, 2000);
     }
 
