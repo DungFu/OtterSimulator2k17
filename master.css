@@ -19,55 +19,40 @@ body {
   margin: 0;
 }
 
-#otter_enrichment {
-  visibility: hidden;
+.top_box {
   font-family: Arial;
   cursor: pointer;
   position: absolute;
   top: 0;
-  left: 0;
   background-color: purple;
-  padding: 20px;
+  padding: 1em;
   color: white;
-  border-bottom-right-radius: 20px;
+  font-size: 1em;
+}
+
+#otter_enrichment {
+  visibility: hidden;
+  left: 0;
+  border-bottom-right-radius: 1em;
 }
 
 #goodbye {
   visibility: hidden;
-  font-family: Arial;
-  cursor: pointer;
-  position: absolute;
-  top: 0;
   left: 0;
-  background-color: purple;
-  padding: 20px;
-  color: white;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: 1em;
 }
 
 #otter_enrichment_score {
   visibility: hidden;
-  font-family: Arial;
-  position: absolute;
-  top: 0;
   right: 0;
-  background-color: purple;
-  padding: 20px;
-  color: white;
-  border-bottom-left-radius: 20px;
+  border-bottom-left-radius: 1em;
 }
 
 #message {
   visibility: hidden;
-  font-family: Arial;
-  position: absolute;
   max-width: 50%;
-  top: 0;
   left: 50%;
-  background-color: purple;
-  padding: 20px;
-  color: white;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
+  border-bottom-left-radius: 1em;
+  border-bottom-right-radius: 1em;
   transform: translate(-50%, 0);
 }
