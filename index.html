@@ -362,21 +362,44 @@
       }, 2000);
     }
 
-    document.onmousemove = function(e) {
-      mouseX = e.pageX;
-      mouseY = e.pageY;
+    function updateBangTextLocation() {
       if (bangText !== null) {
         bangText.position.set(mouseX - 100, mouseY - 100);
       }
     }
 
-    renderer.view.onmousedown = function(e) {
+    function cursorMove(e) {
+      mouseX = e.pageX;
+      mouseY = e.pageY;
+      updateBangTextLocation();
+    }
+
+    function cursorDown(e) {
+      mouseX = e.pageX;
+      mouseY = e.pageY;
+      updateBangTextLocation();
       if (otterBusy) {
         return;
       }
       if (game == "bang") {
         launchBang("Nibbles is now a pro at hiding from predators! He won't have any troubles staying safe getting home now. Next he needs to be enriched!", true);
       }
+    }
+
+    document.onmousemove = function(e) {
+      cursorMove(e);
+    }
+
+    document.ontouchmove = function(e) {
+      cursorMove(e);
+    }
+
+    renderer.view.onmousedown = function(e) {
+      cursorDown(e);
+    }
+
+    renderer.view.ontouchstart = function(e) {
+      cursorDown(e);
     }
   </script>
   <div id="otter_enrichment" onclick="launchEnrichment()">Otter Enrichment!</div>
